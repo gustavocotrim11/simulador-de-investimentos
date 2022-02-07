@@ -1,5 +1,10 @@
+import { GlobalStyle } from "./styles/global";
+
 export function App() {
   return (
-    <h1>Simulador de Investimentos</h1>
+    <>
+      <GlobalStyle />
+      <h1>Simulador de Investimentos</h1>
+    </>
   );
 }
