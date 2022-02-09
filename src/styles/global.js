@@ -5,6 +5,7 @@ export const GlobalStyle = createGlobalStyle`
     --background: #f8f2f5;
 
     --white: #FFFFFF;
+    --coral: #FF7F50;
   }
 
   * {
@@ -44,5 +45,14 @@ export const GlobalStyle = createGlobalStyle`
   [disabled] {
     opacity: 0.6;
     cursor: not-allowed;
+  }
+
+  input::-webkit-outer-spin-button,
+  input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+  }
+  input[type=number] {
+      -moz-appearance:textfield;
   }
 `
