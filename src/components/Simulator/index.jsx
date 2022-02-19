@@ -1,96 +1,143 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
-import { FaCheck } from "react-icons/fa";
+import { Form } from "@unform/web";
 
-import { Container, RadioBox } from './styles';
+import Input from '../FormElements/Input/index.jsx';
+import RadioBox from '../FormElements/RadioBox';
 
-export function Simulator() {
-  const [initialContribution, setInitialContribution] = useState();
-  const [maturityDate, setMaturityDate] = useState();
-  const [ipca, setIpca] = useState();
-  const [monthlyContribution, setMonthlyContribution] = useState();
-  const [returnRate, setReturnRate] = useState();
-  const [cdi, setCdi] = useState();
-  const [incomeType, setIncomeType] = useState('');
-  const [indexingType, setIndexingType] = useState('');
-  
-  function handleSimulation(event) {
-    event.preventDefault();
-    
-    console.log({
-      initialContribution,
-      maturityDate,
-      ipca,
-      monthlyContribution,
-      returnRate,
-      cdi,
-      incomeType,
-      indexingType
-    });
-  }
+import { Container } from './styles';
+
+import { getIndicador } from '../../services/indicadores';
+
+export function Simulator({handleSimulation, formRef, setSimulate}) {
+  const [ ipca, setIpca] = useState('');
+  const [ cdi, setCdi] = useState('');
 
   function handleClearFields() {
-    setInitialContribution();
-    setMaturityDate();
-    setIpca();
-    setMonthlyContribution();
-    setReturnRate();
-    setCdi();
-    setIncomeType('');
-    setIndexingType('');
+    formRef.current.setErrors({});
+    formRef.current.clearField('tipoRendimento');
+    formRef.current.clearField('aporteInicial');
+    formRef.current.clearField('prazo');
+    formRef.current.clearField('tipoDeIndexação');
+    formRef.current.clearField('aporteMensal');
+    formRef.current.clearField('rentabilidade');
+    setSimulate(false);
   }
+
+  useEffect(() => {
+    async function fetchIndicadors() {
+      setIpca(await getIndicador('ipca'));
+      setCdi(await getIndicador('cdi'));
+    }
+
+    fetchIndicadors();
+  }, [])
+
+  const incomeTypeOptions = [
+    { id: 'bruto', value: 'bruto', label: 'Bruto' },
+    { id: 'liquido', value: 'liquido', label: 'Líquido' },
+  ]
+
+  const indexingTypeOptions = [
+    { id: 'pre', value: 'pre', label: 'PRÉ' },
+    { id: 'pos', value: 'pos', label: 'PÓS' },
+    { id: 'ipca', value: 'ipca', label: 'FIXADO' }, // Obs: Em "tipoIndexacao" a API retorna "ipca" em vez de "fixado" por exemplo
+  ]
 
   return (
     <Container>
       <h2>Simulador</h2>
 
-      <form onSubmit={handleSimulation} onReset={handleClearFields}>
+      <Form ref={formRef} onSubmit={handleSimulation}>
         <div className="formContainer">
           <div className="formContent">
-            <label>Rendimento</label>
-            <div className="checkboxButton">
-              <RadioBox type='button' onClick={() => {setIncomeType('gross')}} isActive={incomeType === 'gross'}>{incomeType === 'gross' && <FaCheck/>} Bruto</RadioBox>
-              <RadioBox type='button' onClick={() => {setIncomeType('net')}} isActive={incomeType === 'net'}>{incomeType === 'net' && <FaCheck/>} Líquido</RadioBox>
-            </div>
-
-            <label>Aporte Inicial</label>
-            <input
-              type='number'
-              value={initialContribution}
-              onChange={event => setInitialContribution(Number(event.target.value))}
+            <RadioBox 
+              name="tipoRendimento" 
+              label="Rendimento" 
+              options={incomeTypeOptions}
             />
 
-            <label>Prazo (em meses)</label>
-            <input type="number" value={maturityDate} onChange={event => setMaturityDate(Number(event.target.value))}/>
+            <Input 
+              label="Aporte Inicial"
+              type='text'
+              className="input"
+              name="aporteInicial"
+              thousandSeparator="."
+              decimalSeparator=","
+              prefix="R$ "
+              decimalScale={2}
+            />
 
-            <label>IPCA (ao ano)</label>
-            <input type="number" value={ipca}/>
+            <Input 
+              label="Prazo (em meses)"
+              type="text" 
+              className="input" 
+              name="prazo"
+              format="###" 
+            />
+
+            <Input
+              value={ipca} 
+              label="IPCA (ao ano)" 
+              type="text" 
+              className="input" 
+              readOnly 
+              name="ipcaInput"
+              thousandSeparator="."
+              decimalSeparator=","
+              suffix="%"
+              decimalScale={2}
+            />
 
           </div>
           <div className="formContent">
-            <label>Tipos de Indexação</label>
-            <div className="checkboxButton">
-              <RadioBox type='button' onClick={() => {setIndexingType('pre')}} isActive={indexingType === 'pre'}>{indexingType === 'pre' && <FaCheck/>} PRÉ</RadioBox>
-              <RadioBox type='button' onClick={() => {setIndexingType('post')}} isActive={indexingType === 'post'}>{indexingType === 'post' && <FaCheck/>} POS</RadioBox>
-              <RadioBox type='button' onClick={() => {setIndexingType('fixed')}} isActive={indexingType === 'fixed'}>{indexingType === 'fixed' && <FaCheck/>} FIXADO</RadioBox>
-            </div>
+            <RadioBox 
+              label="Tipos de Indexação" 
+              name="tipoDeIndexação" 
+              options={indexingTypeOptions}
+            />
 
-            <label>Aporte Mensal</label>
-            <input type="number" value={monthlyContribution} onChange={event => setMonthlyContribution(Number(event.target.value))}/>
+            <Input 
+              label="Aporte Mensal"
+              type="text" 
+              className="input" 
+              name="aporteMensal"
+              thousandSeparator="."
+              decimalSeparator=","
+              prefix="R$ "
+              decimalScale={2}
+            />
 
-            <label>Rentabilidade</label>
-            <input type="number" value={returnRate} onChange={event => setReturnRate(Number(event.target.value))}/>
+            <Input 
+              label="Rentabilidade"
+              type="text" 
+              className="input" 
+              name="rentabilidade"
+              thousandSeparator="."
+              decimalSeparator=","
+              suffix="%"
+              decimalScale={2}
+            />
 
-            <label>CDI (ao ano)</label>
-            <input type="number" value={cdi}/>
-
+            <Input 
+              value={cdi}
+              label="CDI (ao ano)" 
+              type="text" 
+              className="input" 
+              readOnly 
+              name="cdi"
+              thousandSeparator="."
+              decimalSeparator=","
+              suffix="%"
+              decimalScale={2}
+            />
           </div>
         </div>
         <div className="formAction">
-          <button type="reset">Limpar campos</button>
+          <button type="button" onClick={handleClearFields}>Limpar campos</button>
           <button type="submit">Simular</button>
         </div>
-      </form>
+      </Form>
     </Container>
   );
 }
